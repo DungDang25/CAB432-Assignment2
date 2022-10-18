@@ -2,4 +2,7 @@
 curl "https://api.twitter.com/2/tweets/sample/stream" -H "Authorization: Bearer AAAAAAAAAAAAAAAAAAAAANr%2BggEAAAAAqmwaKslLoIJ7nANKHZc1Fqyobcc%3DpMVASQ1FFHr2boNhAij7mgdT13GvL7ii3PXuztbpzdgJFd3EOc"
 
 ###
-curl "https://api.twitter.com/2/tweets/sample/stream" -H "Authorization: Bearer AAAAAAAAAAAAAAAAAAAAANr%2BggEAAAAAqmwaKslLoIJ7nANKHZc1Fqyobcc%3DpMVASQ1FFHr2boNhAij7mgdT13GvL7ii3PXuztbpzdgJFd3EOc"
+curl "https://api.twitter.com/2/tweets/sample/stream" -H "Authorization: Bearer AAAAAAAAAAAAAAAAAAAAAKIwiQEAAAAAu0ci9Tng5iMu00auCcIBoiJt2BI%3DzgvsOUwYUntkr3Z47PY58qVfJUq8Rs0nYIvmnGqFkTiwBcVGjW"
+
+###
+curl "https://api.twitter.com/2/tweets/search/recent?query=bts" -H "Authorization: Bearer AAAAAAAAAAAAAAAAAAAAAFQwiQEAAAAAq%2FRbx4qx9hqkn91OwZuPpJPx7K0%3D2XhYlaUdwkd2alrFesjfv60SZboJG3RA8riMt61zVsqXxYtzyW"
