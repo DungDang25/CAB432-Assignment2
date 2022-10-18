@@ -1,0 +1,3 @@
+###
+GET https://api.twitter.com/2/tweets/sample10/stream 
+Authorization: Bearer AAAAAAAAAAAAAAAAAAAAANr%2BggEAAAAA18ZanIGPLNFJg8u7ru5BAisIfr4%3DVGcCP5mkMAbm8eDwaKBZn3DKqAL4ahBVRdQmccYFFFkDn4mdHB
