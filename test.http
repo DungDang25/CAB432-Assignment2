@@ -1,3 +1,2 @@
 ###
-GET https://api.twitter.com/2/tweets/sample10/stream 
-Authorization: Bearer AAAAAAAAAAAAAAAAAAAAANr%2BggEAAAAA18ZanIGPLNFJg8u7ru5BAisIfr4%3DVGcCP5mkMAbm8eDwaKBZn3DKqAL4ahBVRdQmccYFFFkDn4mdHB
+curl "https://api.twitter.com/2/tweets/sample/stream" -H "Authorization: Bearer AAAAAAAAAAAAAAAAAAAAANr%2BggEAAAAAqmwaKslLoIJ7nANKHZc1Fqyobcc%3DpMVASQ1FFHr2boNhAij7mgdT13GvL7ii3PXuztbpzdgJFd3EOc"
