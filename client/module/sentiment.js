@@ -5,7 +5,7 @@ var senObj = new Sentiment();
 
 // Tweet Texts will be sent to the Sentiment Analysis Unit
 senObj.getSentiment = (tweet) => {
-    const senScore = sen.analyze(tweet.text);
+    const senScore = senObj.analyze(tweet.text);
 
     // Calculate the score
     scoreValue = senScore.score;
