@@ -8,11 +8,11 @@ senObj.getSentiment = (tweet) => {
     const senScore = senObj.analyze(tweet.text);
 
     // Calculate the score
-    scoreValue = senScore.score;
+    const scoreValue = senScore.score;
 
     // Check the values of the sentiment scores + - or 0
     if (scoreValue > 0) {
-        value = "Positive";
+        score = "Positive";
     } else if (scoreValue = 0) {
         value = "Neutral";
     } else {
