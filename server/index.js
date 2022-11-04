@@ -59,7 +59,7 @@ async function main() {
     i = 0
     for await (const { data } of stream) {
         if (i !== 10) {
-            console.log('This is my tweet:', data);
+            console.log('This is my tweet:', data.text);
             i++;
         }
         else {
