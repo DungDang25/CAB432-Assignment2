@@ -51,16 +51,12 @@ AWS.config.update(configAWS);
 
 // Redis stuff
 
-
-
-
-
-
-
 async function main() {
     const rules = await client.v2.streamRules();
 
-    const searchValue = 'TWICE';
+    const searchValue = 'COVID';
+
+    const searchQuery = `${searchValue} lang:en -is:retweet`
 
     // Counter 
     let i = 0
@@ -81,7 +77,7 @@ async function main() {
 
     const addedRules = await client.v2.updateStreamRules({
         add: [
-            { value: `${searchValue}` },
+            { value: `${searchQuery}` },
         ],
     });
 
@@ -109,7 +105,7 @@ async function main() {
             // Delete search parameter after finish
             const deleteRules = await client.v2.updateStreamRules({
                 delete: {
-                    values: [searchValue],
+                    values: [searchQuery],
                 },
             });
 
