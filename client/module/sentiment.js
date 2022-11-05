@@ -1,45 +1,32 @@
 const Sentiment = require("sentiment");
 
-// Initialise variable sen for sentiment score
-var senObj = new Sentiment();
+var sentimentObject = new Sentiment();
 
-
-
-// Tweet Texts will be sent to the Sentiment Analysis Unit
-senObj.getSentiment = (tweet) => {
-    const senScore = senObj.analyze(tweet.text);
-
-    // Calculate the score
-    scoreValue = senScore.score;
-
-    // Check the values of the sentiment scores + - or 0
-    if (scoreValue > 0) {
-        value = "Positive";
-    } else if (scoreValue = 0) {
-        value = "Neutral";
+//Send Tweet Text to Sentiment Analysis
+sentimentObject.getSentiment = (data) => {
+    const sentimentScore = sentimentObject.analyze(data.text);
+    value = sentimentScore.score;
+    if (value > 0) {
+        score = "Positive Vibe";
+    } else if (value < 0) {
+        score = "Negative Vibe";
     } else {
-        value = "Negative";
+        score = "Neutral Vibe";
     }
-
-    // return the values above 
-
-    return senObj.appendSentiment(tweet, value, scoreValue);
+    return sentimentObject.appendSentiment(data, score, value);
 };
 
-
-// Transfer the evaluation score to the client 
-
-senObj.appendSentiment = (tweet, value, scoreValue) => {
-    var evalTweet = {
-        sentiment: value,
-        score_value: scoreValue,
-        text: tweet.text,
-        id_str: tweet.id_str,
-        timestamp:  tweet.timestamp,
-        generated_at: tweet.generated_at,
+//Generate a var sentimentResult to store information
+sentimentObject.appendSentiment = (data, sentiment, value) => {
+    var sentimentResult = {
+        text: data.text,
+        sentiment: sentiment,
+        sentiment_value: value,
+        // generated_on: data.created_at,
+        // timestamp_ms: data.timestamp_ms,
+        // id_str: data.id_str,
     };
-    return evalTweet;
+    return sentimentResult;
 };
 
-
-module.exports = senObj;
+module.exports = sentimentObject;

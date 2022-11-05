@@ -24,7 +24,7 @@ const express = require("express");
 var router = express.Router();
 var AWS = require("aws-sdk");
 const { env } = require("process");
-var { sentimentAnalysis } = require("../client/module/sentiment");
+var { getSentiment } = require("../client/module/sentiment");
 const redisClient = redis.createClient({
 
 });
@@ -101,7 +101,9 @@ async function main() {
     for await (const { data } of stream) {
         if (i !== 10) {
             console.log('This is my tweet:', data.text);
+            console.log(getSentiment(data))
             i++;
+            
         }
         else {
             // Delete search parameter after finish
