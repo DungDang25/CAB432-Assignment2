@@ -3,16 +3,18 @@ const Sentiment = require("sentiment");
 // Initialise variable sen for sentiment score
 var senObj = new Sentiment();
 
+
+
 // Tweet Texts will be sent to the Sentiment Analysis Unit
 senObj.getSentiment = (tweet) => {
     const senScore = senObj.analyze(tweet.text);
 
     // Calculate the score
-    const scoreValue = senScore.score;
+    scoreValue = senScore.score;
 
     // Check the values of the sentiment scores + - or 0
     if (scoreValue > 0) {
-        score = "Positive";
+        value = "Positive";
     } else if (scoreValue = 0) {
         value = "Neutral";
     } else {
