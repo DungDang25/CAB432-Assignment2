@@ -1,7 +1,4 @@
-// const { Client } = require("twitter-api-sdk");
-// const express = require('express')
-// const { appendSentiment } = require("../client/module/sentiment");
-require('dotenv').config();
+
 
 // const app = express();
 
@@ -23,6 +20,7 @@ require('dotenv').config();
 
 require('dotenv').config();
 var redis = require("redis");
+const express = require("express");
 var router = express.Router();
 var AWS = require("aws-sdk");
 const { env } = require("process");
@@ -30,19 +28,20 @@ var { sentimentAnalysis } = require("../client/module/sentiment");
 const redisClient = redis.createClient( {
 
 });
+
+const app = express();
+
 const { TwitterApi } = require('twitter-api-v2');
 const { ETwitterStreamEvent } = require('twitter-api-v2');
 
 console.log(process.env.BEARER_TOKEN)
 
+
 // Configure Twitter Client
-const client = new TwitterApi({
-    user_token: process.env.BEARER_TOKEN,
-    comsumer_key: process.env.CONSUMER_KEY,
-    consumer_secret: process.env.COMSUMER_SECRET,
-    access_token_key: process.env.ACCESS_KEY,
-    access_token_secret: process.env.ACCESS_TOKEN_SECRET, 
-});
+
+
+const client = new TwitterApi(process.env.BEARER_TOKEN);
+
 
 // Configure AWS
 var configAWS = {
