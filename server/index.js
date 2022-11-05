@@ -20,10 +20,22 @@ require('dotenv').config();
 //         }
 //     }
 // }
+
+require('dotenv').config();
+var redis = require("redis");
+var router = express.Router();
+var AWS = require("aws-sdk");
+const { env } = require("process");
+var { sentimentAnalysis } = require("../client/module/sentiment");
+const redisClient = redis.createClient( {
+
+});
 const { TwitterApi } = require('twitter-api-v2');
 const { ETwitterStreamEvent } = require('twitter-api-v2');
 
 console.log(process.env.BEARER_TOKEN)
+
+// Configure Twitter Client
 const client = new TwitterApi({
     user_token: process.env.BEARER_TOKEN,
     comsumer_key: process.env.CONSUMER_KEY,
@@ -31,6 +43,20 @@ const client = new TwitterApi({
     access_token_key: process.env.ACCESS_KEY,
     access_token_secret: process.env.ACCESS_TOKEN_SECRET, 
 });
+
+// Configure AWS
+var configAWS = {
+
+};
+AWS.config.update(configAWS);
+
+// Redis stuff
+
+
+
+
+
+
 
 async function main() {
     const rules = await client.v2.streamRules();
