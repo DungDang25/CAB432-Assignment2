@@ -23,8 +23,14 @@ require('dotenv').config();
 const { TwitterApi } = require('twitter-api-v2');
 const { ETwitterStreamEvent } = require('twitter-api-v2');
 
-console.log(process.env.bearer_token)
-const client = new TwitterApi(process.env.bearer_token);
+console.log(process.env.BEARER_TOKEN)
+const client = new TwitterApi({
+    user_token: process.env.BEARER_TOKEN,
+    comsumer_key: process.env.CONSUMER_KEY,
+    consumer_secret: process.env.COMSUMER_SECRET,
+    access_token_key: process.env.ACCESS_KEY,
+    access_token_secret: process.env.ACCESS_TOKEN_SECRET, 
+});
 
 async function main() {
     const rules = await client.v2.streamRules();
