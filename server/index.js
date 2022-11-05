@@ -51,12 +51,17 @@ AWS.config.update(configAWS);
 
 // Redis stuff
 
-async function main() {
+app.get('/stream', (req, res) => {
+    const topic = req.headers.topic
+
+    stream(topic, res)
+    
+})
+
+async function stream(topic, res) {
     const rules = await client.v2.streamRules();
 
-    const searchValue = 'COVID';
-
-    const searchQuery = `${searchValue} lang:en -is:retweet`
+    const searchQuery = `${topic} lang:en -is:retweet`
 
     // Counter 
     let i = 0
@@ -95,11 +100,11 @@ async function main() {
     await stream.connect({ autoReconnect: true, autoReconnectRetries: Infinity });
     i = 0
     for await (const { data } of stream) {
-        if (i !== 10) {
+        if (i !== 100) {
             console.log('This is my tweet:', data.text);
             console.log(getSentiment(data))
             i++;
-            
+            // res.send(data.tex)
         }
         else {
             // Delete search parameter after finish
@@ -108,12 +113,15 @@ async function main() {
                     values: [searchQuery],
                 },
             });
-
+            console.log(i)
             // Close stream
             stream.close();
         }
     }
+    console.log(i)
 }
 
 
-main();
+stream('COVID', 'res');
+
+app.listen(3001);
