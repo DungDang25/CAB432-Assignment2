@@ -1,36 +1,12 @@
-// const { Client } = require("twitter-api-sdk");
-// const express = require('express')
-// const { appendSentiment } = require("../client/module/sentiment");
+const express = require('express')
+const { appendSentiment } = require("../client/module/sentiment");
 require('dotenv').config();
-
-// const app = express();
-
-// console.log(process.env.bearer_token)
-// const client = new Client(process.env.bearer_token);
-
-
-
-// async function main() {
-//     const stream = client.tweets.sampleStream({
-//         "tweet.fields": ["author_id"],
-//     });
-//     for await (const tweet of stream) {
-//         if (tweet.data?.text.includes("Korea")) {
-//             console.log("Tweet ID:" + tweet.data?.id + "\nText: " + tweet.data?.text + "\n");
-//         }
-//     }
-// }
+const app = express();
 const { TwitterApi } = require('twitter-api-v2');
 const { ETwitterStreamEvent } = require('twitter-api-v2');
 
 console.log(process.env.BEARER_TOKEN)
-const client = new TwitterApi({
-    user_token: process.env.BEARER_TOKEN,
-    comsumer_key: process.env.CONSUMER_KEY,
-    consumer_secret: process.env.COMSUMER_SECRET,
-    access_token_key: process.env.ACCESS_KEY,
-    access_token_secret: process.env.ACCESS_TOKEN_SECRET, 
-});
+const client = new TwitterApi(process.env.BEARER_TOKEN);
 
 async function main() {
     const rules = await client.v2.streamRules();
