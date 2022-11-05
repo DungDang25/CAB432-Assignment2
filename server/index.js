@@ -25,7 +25,7 @@ var router = express.Router();
 var AWS = require("aws-sdk");
 const { env } = require("process");
 var { sentimentAnalysis } = require("../client/module/sentiment");
-const redisClient = redis.createClient( {
+const redisClient = redis.createClient({
 
 });
 
@@ -86,7 +86,17 @@ async function main() {
     });
 
     const stream = await client.v2.searchStream();
-    stream.autoReconnect = true;
+
+    stream.on(ETwitterStreamEvent.Connected, () => console.log('Stream is started.'));
+
+    stream.on(
+        // Emitted when Node.js {response} is closed by remote or using .close().
+        ETwitterStreamEvent.ConnectionClosed,
+        () => console.log('Connection has been closed.'),
+    );
+
+    // Start stream!
+    await stream.connect({ autoReconnect: true, autoReconnectRetries: Infinity });
     i = 0
     for await (const { data } of stream) {
         if (i !== 10) {
@@ -103,11 +113,6 @@ async function main() {
 
             // Close stream
             stream.close();
-            stream.on(
-                // Emitted when Node.js {response} is closed by remote or using .close().
-                ETwitterStreamEvent.ConnectionClosed,
-                () => console.log('Connection has been closed.'),
-            );
         }
     }
 }
