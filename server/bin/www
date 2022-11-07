@@ -13,7 +13,7 @@ var http = require('http');
  */
 
 var port = normalizePort(process.env.PORT || '8888');
-app.set('port', port);
+app.set('Listening on Port ', port);
 
 /**
  * Create HTTP server.
@@ -85,7 +85,7 @@ function onListening() {
   var addr = server.address();
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
-    : 'port ' + addr.port;
+    : 'Listening on Port ' + addr.port;
   debug('Listening on ' + bind);
   console.log(bind);
 }

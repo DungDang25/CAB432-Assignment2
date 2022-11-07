@@ -13,7 +13,9 @@ var configAWS = {
 };
 AWS.config.update(configAWS);
 
-var indexRouter = require("../server/index");
+var indexRouter = require("./routes/index");
+var usersRouter = require("./routes/users");
+var twitterRouter = require("./routes/users");
 var indexSentiment = require("../client/module/sentiment");
 var app = express();
 
@@ -27,6 +29,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cors()) // Use this after the variable declaration
+
+app.use("/users", usersRouter);
+app.use("/twitter", twitterRouter);
 
 
 // catch 404 and forward to error handler

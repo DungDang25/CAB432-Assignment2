@@ -4,7 +4,7 @@ const express = require("express");
 var router = express.Router();
 const AWS = require("aws-sdk");
 const { env } = require("process");
-var { getSentiment } = require("../client/module/sentiment");
+var { getSentiment } = require("../../client/module/sentiment");
 
 const app = express();
 
