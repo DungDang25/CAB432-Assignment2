@@ -4,25 +4,81 @@ const express = require("express");
 var router = express.Router();
 const AWS = require("aws-sdk");
 const { env } = require("process");
-var { getSentiment } = require("../client/module/sentiment");
+const axios = require("axios");
+const { getSentiment } = require("../client/module/sentiment");
+const csvjson = require('csvjson');
 
 const app = express();
 
-const { TwitterApi } = require('twitter-api-v2');
-const { ETwitterStreamEvent } = require('twitter-api-v2');
+// ============ Configure Twitter Functions ============ 
+const twitter = require("twitter-api-sdk")
+const BEARER_TOKEN = process.env.BEARER_TOKEN
+
+//const query = req.headers.query
+async function getTweets(query) {
+    try {
+        const response = await axios.get(
+            `https://api.twitter.com/2/tweets/search/recent?query=${query}%20lang%3Aen%20-is%3Aretweet&max_results=10&tweet.fields=author_id,created_at,id`,
+            {
+                headers: {
+                    Authorization: `Bearer ${BEARER_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+            }
+        );
+        //console.log(response.data.data)
+        const tweetSentiments = []
+        for (let i = 0; i < response.data.data.length; i++) {
+            console.log(response.data.data[i].text)
+            const sentiment = getSentiment(response.data.data[i])
+            tweetSentiments[i] = {sentiment: sentiment.sentiment, sentimentValue: sentiment.sentiment_value}
+        }
+        const body = JSON.stringify({
+            source: "S3 Bucket",
+            ...tweetSentiments,
+        });
+        console.log(tweetSentiments)
+        console.log(body)
+        return tweetSentiments
+    } catch (e) {
+        const errorLog = e;
+        console.error(errorLog);
+        return 0
+    }
+}
 
 
+// ============ Configure AWS and s3 functions ============ 
 
-// Configure Twitter Client
-const client = new TwitterApi(process.env.BEARER_TOKEN);
-
-
-// Configure AWS
-// Create unique bucket name
+// For local dev
+const accessKeyId = process.env.AWS_ACCESS_KEY_ID
+const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
+const sessionToken = process.env.AWS_SESSION_TOKEN
+console.log(`AWS Key ID: ${accessKeyId} \n`)
+console.log(`AWS Secret Key: ${secretAccessKey} \n`)
+console.log(`AWS Session Token: ${sessionToken} \n`)
+const region = "ap-southeast-2";
 const bucketName = "n10693769-twitter-sentiment"
-AWS.config.update({ region: 'ap-southeast-2' });
-const s3 = new AWS.S3({ apiVersion: "2006-03-01", region: AWS.config.region });
 
+// For when scaling
+// AWS.config.credentials = new AWS.EC2MetadataCredentials({
+//     httpOptions: { timeout: 5000 }, // 5 second timeout
+//     maxRetries: 10, // retry 10 times
+//     retryDelayOptions: { base: 200 }, // see AWS.Config for information
+//     logger: console // see AWS.Config for information
+// });
+
+const AWSConfig = {
+    region,
+    accessKeyId,
+    secretAccessKey,
+    sessionToken,
+}
+
+AWS.config.update(AWSConfig)
+var s3 = new AWS.S3();
+
+// Create unique bucket name
 async function bucketCreate(bucketName) {
     try {
         await s3.createBucket({ Bucket: bucketName }).promise();
@@ -36,138 +92,71 @@ async function bucketCreate(bucketName) {
 }
 
 // Configure Redis
-const redisClient = redis.createClient();
-async function redisConnect() {
-    try {
-        await redisClient.connect();
-    } catch (err) {
-        console.log(err);
-    }
-}
+const elasti = 'n10693769-assignment-2-001.n10693769-assignment-2.km2jzi.apse2.cache.amazonaws.com:6379'
+const redisClient = redis.createClient({
+    url: `redis://${elasti}`
+});
 
 // MAIN FUNCTIONS
-// async function cache_store(data, bucketName, res) {
-//     const redisKey = 'sentimentValues'
+async function cache_store(query, bucketName, res) {
+    const redisKey = `query:${query}`
+    
+    const result = await redisClient.get(redisKey)
 
-//     const result = await redisClient.get(redisKey)
+    const params = { Bucket: bucketName, Key: redisKey };
 
-//     const params = { Bucket: bucketName, Key: redisKey };
-
-//     if (result) {
-//         // Serve from redis
-//         console.log("Redis")
-//         const resultJSON = JSON.parse(result);
-//         res.json(resultJSON);
-//     } else {
-//         // Check if in S3
-//         try {
-//             const s3Result = await s3.getObject(params).promise();
-//             console.log("here")
-//             // Serve from S3
-//             const s3JSON = JSON.parse(s3Result.Body);
-//             res.json(s3JSON);
-//             s3JSON.source = "Redis Cache"
-//             redisClient.setEx(
-//                 redisKey,
-//                 3600,
-//                 JSON.stringify({ ...s3JSON })
-//             );
-//         } catch (err) {
-//             if (err.statusCode === 404) {
-//                 // Serve from Wikipedia API
-//                 const response = await axios.get(searchUrl);
-//                 const responseJSON = response.data;
-//                 const body = JSON.stringify({
-//                     source: "S3 Bucket",
-//                     ...responseJSON,
-//                 });
-//                 const objectParams = { Bucket: bucketName, Key: redisKey, Body: body };
-//                 await s3.putObject(objectParams).promise();
-//                 console.log(`Successfully uploaded data to ${bucketName}/${redisKey}`);
-//                 redisClient.setEx(
-//                     redisKey,
-//                     3600,
-//                     JSON.stringify({ source: "Redis Cache", ...responseJSON })
-//                 );
-//                 res.json({ source: "Wikipedia API", ...responseJSON });
-//             } else {
-//                 // Something else went wrong when accessing S3
-//                 res.json(err);
-//             }
-//         }
-//     }
-// }
-
-async function stream(topic, res) {
-    const rules = await client.v2.streamRules();
-
-    const array = []
-    const searchQuery = `${topic} lang:en -is:retweet`
-
-    // Counter 
-    let i = 0
-
-    // Handle if the rules array is not empty/undefined by default
-    if (rules.data !== undefined) {
-        console.log(rules.data.map(rule => rule.value));
-        while (i < rules.data.length) {
-            const value = rules.data[i].value;
-            const deleteRules = await client.v2.updateStreamRules({
-                delete: {
-                    values: [value],
-                },
-            });
-            i++
-        }
-    }
-
-    // Add search value to stream
-    const addedRules = await client.v2.updateStreamRules({
-        add: [
-            { value: `${searchQuery}` },
-        ],
-    });
-
-    const stream = await client.v2.searchStream();
-
-    stream.on(
-        // Emitted when Node.js {response} is closed by remote or using .close().
-        ETwitterStreamEvent.ConnectionClosed,
-        () => console.log('Connection has been closed.'),
-    );
-
-    // Start stream!
-    await stream.connect({ autoReconnect: true, autoReconnectRetries: Infinity });
-    i = 0
-    for await (const { data } of stream) {
-        if (i !== 100) {
-            //console.log(data.text);
-            //console.log(getSentiment(data))
-            array[i] = data.text
-            i++;
-            // res.(data.tex)
-        }
-        else {
-            // Delete search parameter after finish
-            const deleteRules = await client.v2.updateStreamRules({
-                delete: {
-                    values: [searchQuery],
-                },
-            });
-            console.log(i)
-            console.log(array)
-            // res.send(array)
-            // Close stream
-            stream.close();
+    if (result) {
+        // Serve from redis
+        console.log("Redis")
+        const resultJSON = JSON.parse(result);
+        res.json(resultJSON);
+    } else {
+        // Not found in Redis. Check if in S3
+        try {
+            const s3Result = await s3.getObject(params).promise();
+            // Serve from S3
+            const s3JSON = JSON.parse(s3Result.Body);
+            res.json(s3JSON);
+            s3JSON.source = "Redis Cache"
+            redisClient.setEx(
+                redisKey,
+                3600,
+                JSON.stringify({ ...s3JSON })
+            );
+        } catch (err) {
+            if (err.statusCode === 404) {
+                // Serve from Twitter API
+                const response = getTweets(query);
+                //const response = await axios.get(searchUrl);
+                //const responseJSON = response.data;
+                // const body = JSON.stringify({
+                //     source: "S3 Bucket",
+                //     ...responseJSON,
+                // });
+                const csvData = csvjson.toCSV(response, { headers: 'key' });
+                const objectParams = { Bucket: bucketName, Key: redisKey, Body: csvData };
+                await s3.putObject(objectParams).promise();
+                console.log(`Successfully uploaded data to ${bucketName}/${redisKey}`);
+                redisClient.setEx(
+                    redisKey,
+                    3600,
+                    JSON.stringify({ source: "Redis Cache", ...responseJSON })
+                );
+                res.json({ source: "Wikipedia API", ...responseJSON });
+            } else {
+                // Something else went wrong when accessing S3
+                res.json(err);
+            }
         }
     }
 }
 
-app.get('/stream', (req, res) => {
-    const topic = req.headers.topic
-    stream(topic, res)
+app.get('/getTweets', (req, res) => {
+    const query = req.headers.query
+    const tweets = getTweets(query, res)
+
 })
 
-stream('COVID', 'res');
+getTweets('COVID');
 
 app.listen(3001);
