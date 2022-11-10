@@ -20,12 +20,13 @@ function App() {
     setSearching(true);
     const encode = encodeURIComponent(query);
     try {
-      const response = await axios.get("/searchtweets", {
+      const response = await axios.get("http://localhost:3001/getTweets", {
         headers: {
           query: `${encode}`,
           "Content-Type": "application/json",
         },
       });
+      console.log(response)
     } catch (error) {
       console.error(error);
     }
