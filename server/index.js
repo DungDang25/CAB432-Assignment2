@@ -109,7 +109,7 @@ async function cache_store(query, bucketName, res) {
   const redisKey = `${query}.csv`;
 
   const result = await redisClient.get(redisKey);
-  const resultCounter = await redisClient.get(`${query}-counter.txt`);
+  const resultCounter = await redisClient.get(`${query}-tracker`);
 
   bucketCreate(bucketName);
 
@@ -123,7 +123,6 @@ async function cache_store(query, bucketName, res) {
     const counterJSON = JSON.parse(resultCounter);
     //res.json(resultJSON);
     console.log(resultJSON);
-    console.log(counterJSON)
   } else {
     s3.headObject(params, async function (res, err) {
       if (res && res.name === "NotFound") {
@@ -142,15 +141,15 @@ async function cache_store(query, bucketName, res) {
         await s3
           .putObject({
             Bucket: bucketName,
-            Key: `${query}-counter.txt`,
-            Body: `counter=1`,
+            Key: `${query}-tracker`,
+            Body: { counter: 1, timestamp: `${new Date().toISOString()}`}
           })
           .promise();
         // cache counter into redis
         redisClient.setEx(
-          `${query}-counter.txt`,
+          `${query}-tracker`,
           3600,
-          JSON.stringify({ key: query, data: 1 })
+          JSON.stringify({ key: query, counter: 1, Timestamp: `${new Date().toISOString()}`})
         );
         // s3 params for csv
         const objectParams = {
@@ -200,6 +199,6 @@ async function cache_store(query, bucketName, res) {
 //     cache_store(query, bucketName, res)
 // });
 
-cache_store("Vietnam", bucketName, "res");
+cache_store("Korea", bucketName, "res");
 
 //app.listen(3001);
