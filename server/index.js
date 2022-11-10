@@ -5,9 +5,7 @@ var router = express.Router();
 const AWS = require("aws-sdk");
 const { env } = require("process");
 const axios = require("axios");
-const { getSentiment } = require("sentiment");
-const csvjson = require("csvjson");
-const csv = require("csvtojson");
+const { getSentiment } = require("./module/sentiment");
 const cors = require('cors')
 
 const app = express();
@@ -162,6 +160,7 @@ async function cache_store(query, bucketName, res) {
     const trackerJSON = JSON.parse(tracker);
     console.log(trackerJSON);
     //res.json(trackerJSON);
+    return trackerJSON
   } else {
     s3.headObject(params, async function (res, err) {
       if (res && res.name === "NotFound") {
@@ -186,12 +185,12 @@ async function cache_store(query, bucketName, res) {
         redisClient.setEx(key, 3600, JSON.stringify(trackerRedis));
         console.log(trackerRedis)
         //res.json(trackerRedis)
+        return trackerRedis
       } else {
         console.log("============ Not found in Redis. Check S3 ============");
         // Get tracker
         const s3Tracker = await s3.getObject(params).promise();
         const trackerJSON = JSON.parse(s3Tracker.Body);
-        console.log(trackerJSON);
         if (checkDate(trackerJSON.timestamp) === 0) {
           const response = getTweets(query);
           let data;
@@ -208,18 +207,27 @@ async function cache_store(query, bucketName, res) {
           };
           redisWrite(key, trackerRedis);
           //res.json(trackerRedis)
+          return trackerRedis
         } else {
           redisClient.setEx(key, 3600, JSON.stringify(trackerJSON));
           //res.json(trackerJSON)
+          return trackerJSON
         }
       }
     });
   }
 }
 
-app.get("/getTweets", (req, res) => {
+app.get("/getTweets", async (req, res) => {
     const query = req.headers.query;
-    cache_store(query, bucketName, res)
+    const response = cache_store(query, bucketName, res)
+    console.log(Promise.resolve(response))
+    let test
+    await response.then(function (result) {
+      test = result
+    });
+    console.log(test)
+    res.send(test)
 });
 
 app.listen(3001);
