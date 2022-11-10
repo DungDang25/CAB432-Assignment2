@@ -3,13 +3,13 @@ var redis = require("redis");
 const express = require("express");
 var router = express.Router();
 const AWS = require("aws-sdk");
-const { env } = require("process");
+const { env, send } = require("process");
 const axios = require("axios");
 const { getSentiment} = require("../module/sentiment");
 const csvjson = require("csvjson");
 const csv = require('csvtojson');
 
-const app = express();
+
 
 // ============ Configure Twitter Functions ============
 const twitter = require("twitter-api-sdk");
@@ -170,11 +170,13 @@ async function cache_store(query, bucketName, res) {
     }
 }
 
-// app.get("/getTweets", (req, res) => {
-//     const query = req.headers.query;
-//     cache_store(query, bucketName, res)
-// });
+app.get("/getTweets", (req, res) => {
+    const query = req.headers.query;
+    cache_store(query, bucketName, res);
+});
 
 cache_store("Russia", bucketName, "res");
 
 //app.listen(3001);
+
+

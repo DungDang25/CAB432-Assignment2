@@ -8,15 +8,15 @@ var cors = require("cors");
 var dotenv = require("dotenv");
 dotenv.config();
 
-var configAWS = {
+// var configAWS = {
 
-};
-AWS.config.update(configAWS);
+// };
+// AWS.config.update(configAWS);
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var twitterRouter = require("./routes/users");
-var indexSentiment = require("../client/module/sentiment");
+var indexSentiment = require("./module/sentiment");
 var app = express();
 
 // view engine setup

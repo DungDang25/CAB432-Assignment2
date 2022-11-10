@@ -1,0 +1,40 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+
+.search-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+
+input {
+  font-size: 1rem;
+}
+
+.user-tweets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: .25rem;
+  margin-top: 2rem;
+}
+
+.tweets {
+  border: 1px solid lightseagreen;
+  background-color: white;
+  padding: .5rem;
+}
+
+.tweets > header {
+  margin-bottom: .25rem;
+}
+
+.hide {
+  display: none;
+}

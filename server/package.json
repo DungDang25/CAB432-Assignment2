@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "private": true,
-  "main": "index.js",
+  "main": "twitter.js",
   "scripts": {
     "start": "nodemon ./bin/www"
   },
@@ -19,11 +19,15 @@
     "express": "^4.18.2",
     "jade": "^1.11.0",
     "morgan": "^1.10.0",
+    "next": "^13.0.2",
     "redis": "^4.4.0",
     "sentiment": "^5.0.2",
     "twit": "^2.2.11",
     "twitter": "^1.7.1",
     "twitter-api-sdk": "^1.2.0",
     "twitter-api-v2": "^1.12.9"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
   }
 }
