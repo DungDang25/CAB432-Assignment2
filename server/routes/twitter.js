@@ -5,7 +5,7 @@ var router = express.Router();
 const AWS = require("aws-sdk");
 const { env } = require("process");
 const axios = require("axios");
-const { getSentiment } = require("../module/sentiment");
+const { getSentiment} = require("../module/sentiment");
 const csvjson = require("csvjson");
 const csv = require('csvtojson');
 
