@@ -6,8 +6,12 @@ const AWS = require("aws-sdk");
 const { env } = require("process");
 const axios = require("axios");
 const { getSentiment } = require("sentiment");
+const csvjson = require("csvjson");
+const csv = require("csvtojson");
+const cors = require('cors')
 
 const app = express();
+app.use(cors())
 
 // ============ Configure Twitter Functions ============
 const twitter = require("twitter-api-sdk");
@@ -157,7 +161,7 @@ async function cache_store(query, bucketName, res) {
     console.log("Redis");
     const trackerJSON = JSON.parse(tracker);
     console.log(trackerJSON);
-    res.json(trackerJSON);
+    //res.json(trackerJSON);
   } else {
     s3.headObject(params, async function (res, err) {
       if (res && res.name === "NotFound") {
@@ -181,7 +185,7 @@ async function cache_store(query, bucketName, res) {
         };
         redisClient.setEx(key, 3600, JSON.stringify(trackerRedis));
         console.log(trackerRedis)
-        res.json(trackerRedis)
+        //res.json(trackerRedis)
       } else {
         console.log("============ Not found in Redis. Check S3 ============");
         // Get tracker
@@ -203,10 +207,10 @@ async function cache_store(query, bucketName, res) {
             data: data
           };
           redisWrite(key, trackerRedis);
-          res.json(trackerRedis)
+          //res.json(trackerRedis)
         } else {
           redisClient.setEx(key, 3600, JSON.stringify(trackerJSON));
-          res.json(trackerJSON)
+          //res.json(trackerJSON)
         }
       }
     });
@@ -217,7 +221,5 @@ app.get("/getTweets", (req, res) => {
     const query = req.headers.query;
     cache_store(query, bucketName, res)
 });
-
-//cache_store("SEVENTEEN", bucketName, "res");
 
 app.listen(3001);

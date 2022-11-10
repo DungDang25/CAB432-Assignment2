@@ -5,7 +5,7 @@ import Navbar from "react-bootstrap/Navbar";
 import Row from "react-bootstrap/esm/Row";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
-const axios = require("axios").default;
+import axios from "axios";
 
 function App() {
   const [form, setForm] = useState({});
