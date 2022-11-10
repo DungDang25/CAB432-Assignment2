@@ -13,6 +13,7 @@ const app = express();
 
 // ============ Configure Twitter Functions ============
 const twitter = require("twitter-api-sdk");
+const { write } = require("fs");
 const BEARER_TOKEN = process.env.BEARER_TOKEN;
 
 //const query = req.headers.query
@@ -86,7 +87,22 @@ async function bucketCreate(bucketName) {
   }
 }
 
-// ============ Configure Redis ============
+// Write S3
+async function s3Write(bucketName, key, query, data) {
+  await s3
+    .putObject({
+      Bucket: bucketName,
+      Key: key,
+      Body: JSON.stringify({
+        key: query,
+        timestamp: `${new Date().toISOString()}`,
+        data: data,
+      }),
+    })
+    .promise();
+}
+
+// ============ Configure Redis and Redis Functions ============
 // On scaling
 // const elasti =
 //   "n10693769-assignment-2-001.n10693769-assignment-2.km2jzi.apse2.cache.amazonaws.com:6379";
@@ -104,25 +120,46 @@ const redisClient = redis.createClient();
   }
 })();
 
-// ============ MAIN FUNCTIONS ============
-async function cache_store(query, bucketName, res) {
-  const redisKey = `${query}.csv`;
+// Write to Redis
+function redisWrite(key, data) {
+  redisClient.setEx(key, 3600, JSON.stringify(data));
+}
 
-  const result = await redisClient.get(redisKey);
-  const resultCounter = await redisClient.get(`${query}-tracker`);
+// ============ MAIN FUNCTIONS ============
+function checkDate(data) {
+  if (typeof data === "undefined" || !Object.keys(data).length) {
+    return 0;
+  }
+
+  if (data) {
+    const then = new Date(data);
+    const now = new Date();
+    const msBetweenDates = Math.abs(then.getTime() - now.getTime());
+    const hoursBetweenDates = msBetweenDates / (60 * 60 * 1000);
+    if (hoursBetweenDates < 12) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+}
+
+async function cache_store(query, bucketName, res) {
+  const key = `${query}-tracker`;
+
+  const tracker = await redisClient.get(key);
 
   bucketCreate(bucketName);
 
-  const params = { Bucket: bucketName, Key: redisKey };
+  const params = { Bucket: bucketName, Key: key };
 
-  if (result && resultCounter) {
+  if (tracker && checkDate(JSON.parse(tracker).timestamp)) {
     // Serve from redis
     console.log("============ Serve from Redis ============");
     console.log("Redis");
-    const resultJSON = JSON.parse(result);
-    const counterJSON = JSON.parse(resultCounter);
-    //res.json(resultJSON);
-    console.log(resultJSON);
+    const trackerJSON = JSON.parse(tracker);
+    console.log(trackerJSON);
+    //res.json(trackerJSON);
   } else {
     s3.headObject(params, async function (res, err) {
       if (res && res.name === "NotFound") {
@@ -131,66 +168,50 @@ async function cache_store(query, bucketName, res) {
           "============ Not Found in S3 Or Redis. Serve From Twitter ============"
         );
         const response = getTweets(query);
-        let csvData;
+        let data;
         // Convert data to csv format
         await response.then(function (result) {
-          csvData = csvjson.toCSV(result, { headers: "key" });
+          data = result
         });
-
-        // store new counter text file
-        await s3
-          .putObject({
-            Bucket: bucketName,
-            Key: `${query}-tracker`,
-            Body: { counter: 1, timestamp: `${new Date().toISOString()}`}
-          })
-          .promise();
-        // cache counter into redis
-        redisClient.setEx(
-          `${query}-tracker`,
-          3600,
-          JSON.stringify({ key: query, counter: 1, Timestamp: `${new Date().toISOString()}`})
-        );
-        // s3 params for csv
-        const objectParams = {
-          Bucket: bucketName,
-          Key: redisKey,
-          Body: csvData,
-          ContentType: "text/csv",
+        // store to s3
+        s3Write(bucketName, key, query, data)
+        // cache into redis
+        const trackerRedis = {
+          key: query,
+          timestamp: `${new Date().toISOString()}`,
+          data: data,
         };
-        // store csv in s3
-        await s3.putObject(objectParams).promise();
-        console.log(`Successfully uploaded data to ${bucketName}/${redisKey}`);
-        // Cache data in redis
-        redisClient.setEx(
-          redisKey,
-          3600,
-          JSON.stringify({ key: query, data: csvData })
-        );
-        await response.then(function (result) {
-          //res.send([result, 1]);
-          console.log([result, 1]);
-        });
-      } else if (res) {
-        // Handle other errors here....
-        console.log(err);
+        redisClient.setEx(key, 3600, JSON.stringify(trackerRedis));
+        console.log(trackerRedis)
+        //res.json(trackerRedis)
       } else {
         console.log("============ Not found in Redis. Check S3 ============");
-        const s3Result = s3.getObject(params).createReadStream();
-        console.log(s3Result);
-        // Serve from S3
-        const s3JSON = await csv().fromStream(s3Result);
-        console.log(s3JSON);
-        //res.json(s3JSON);
-        s3JSON.source = "Redis Cache";
-        redisClient.setEx(
-          redisKey,
-          3600,
-          JSON.stringify({ key: query, data: s3JSON })
-        );
+        // Get tracker
+        const s3Tracker = await s3.getObject(params).promise();
+        const trackerJSON = JSON.parse(s3Tracker.Body);
+        console.log(trackerJSON);
+        if (checkDate(trackerJSON.timestamp) === 0) {
+          const response = getTweets(query);
+          let data;
+          // Convert data to csv format
+          await response.then(function (result) {
+            data = result
+          });
+          // store to s3
+          s3Write(bucketName, key, query, data)
+          const trackerRedis = {
+            key: query,
+            timestamp: `${new Date().toISOString()}`,
+            data: data
+          };
+          redisWrite(key, trackerRedis);
+          //res.json(trackerRedis)
+        } else {
+          redisClient.setEx(key, 3600, JSON.stringify(trackerJSON));
+          //res.json(trackerJSON)
+        }
       }
     });
-    // Not found in Redis. Check if in S3
   }
 }
 
@@ -199,6 +220,6 @@ async function cache_store(query, bucketName, res) {
 //     cache_store(query, bucketName, res)
 // });
 
-cache_store("Korea", bucketName, "res");
+cache_store("SEVENTEEN", bucketName, "res");
 
 //app.listen(3001);
