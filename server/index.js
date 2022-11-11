@@ -7,20 +7,24 @@ const { env } = require("process");
 const axios = require("axios");
 const { getSentiment } = require("./module/sentiment");
 const cors = require('cors')
+const path = require('path');
 
 const app = express();
 app.use(cors())
 
 // ============ Configure Twitter Functions ============
 const twitter = require("twitter-api-sdk");
-const { write } = require("fs");
 const BEARER_TOKEN = process.env.BEARER_TOKEN;
 
-//const query = req.headers.query
+/**
+ * 
+ * @param {string} query 
+ * @returns array 
+ */
 async function getTweets(query) {
   try {
     const response = await axios.get(
-      `https://api.twitter.com/2/tweets/search/recent?query=${query}%20lang%3Aen%20-is%3Aretweet&max_results=10&tweet.fields=author_id,created_at,id`,
+      `https://api.twitter.com/2/tweets/search/recent?query=${query}%20lang%3Aen%20-is%3Aretweet&max_results=100&tweet.fields=author_id,created_at,id`,
       {
         headers: {
           Authorization: `Bearer ${BEARER_TOKEN}`,
@@ -34,6 +38,7 @@ async function getTweets(query) {
       tweetSentiments[i] = {
         sentiment: sentiment.sentiment,
         sentimentValue: sentiment.sentiment_value,
+        id: response.data.data[i].id
       };
     }
     return tweetSentiments;
@@ -87,7 +92,14 @@ async function bucketCreate(bucketName) {
   }
 }
 
-// Write S3
+
+/**
+ * 
+ * @param {string} bucketName 
+ * @param {string} key 
+ * @param {string} query 
+ * @param {JSON} data 
+ */
 async function s3Write(bucketName, key, query, data) {
   await s3
     .putObject({
@@ -123,11 +135,21 @@ const redisClient = redis.createClient();
 })();
 
 // Write to Redis
+/**
+ * 
+ * @param {string} key 
+ * @param {JSON} data 
+ */
 function redisWrite(key, data) {
   redisClient.setEx(key, 3600, JSON.stringify(data));
 }
 
 // ============ MAIN FUNCTIONS ============
+/**
+ * 
+ * @param {string} data 
+ * @returns 0 or 1
+ */
 function checkDate(data) {
   if (typeof data === "undefined" || !Object.keys(data).length) {
     return 0;
@@ -158,11 +180,8 @@ app.get("/getTweets", async (req, res) => {
 
     if (tracker && checkDate(JSON.parse(tracker).timestamp)) {
       // Serve from redis
-      console.log("============ Serve from Redis ============");
-      console.log("Redis");
+      console.log("============ Data still valid within 12 hours. Serve from Redis ============");
       const trackerJSON = JSON.parse(tracker);
-      console.log(trackerJSON);
-      //resolve.json(trackerJSON);
       res.send(trackerJSON)
     } else {
       s3.headObject(params, async function (resolve, err) {
@@ -172,21 +191,18 @@ app.get("/getTweets", async (req, res) => {
             "============ Not Found in S3 Or Redis. Serve From Twitter ============"
           );
           const response = getTweets(query);
+          const decodeQuery = decodeURI(query)
           let data;
-          // Convert data to csv format
           await response.then(function (result) {
             data = result
           });
-          // store to s3
-          s3Write(bucketName, key, query, data)
-          // cache into redis
+          s3Write(bucketName, key, decodeQuery, data)
           const trackerRedis = {
-            key: query,
+            key: decodeQuery,
             timestamp: `${new Date().toISOString()}`,
             data: data,
           };
           redisClient.setEx(key, 3600, JSON.stringify(trackerRedis));
-          console.log(trackerRedis)
           res.send(trackerRedis)
         } else {
           console.log("============ Not found in Redis. Check S3 ============");
@@ -194,22 +210,23 @@ app.get("/getTweets", async (req, res) => {
           const s3Tracker = await s3.getObject(params).promise();
           const trackerJSON = JSON.parse(s3Tracker.Body);
           if (checkDate(trackerJSON.timestamp) === 0) {
+            console.log("============ Data older than 12 hours. Server from Twitter ============");
             const response = getTweets(query);
+            const decodeQuery = decodeURI(query)
             let data;
-            // Convert data to csv format
             await response.then(function (result) {
               data = result
             });
-            // store to s3
-            s3Write(bucketName, key, query, data)
+            s3Write(bucketName, key, decodeQuery, data)
             const trackerRedis = {
-              key: query,
+              key: decodeQuery,
               timestamp: `${new Date().toISOString()}`,
               data: data
             };
             redisWrite(key, trackerRedis);
             res.send(trackerRedis)
           } else {
+            console.log("============ Data within 12 hours. Server from S3 ============");
             redisClient.setEx(key, 3600, JSON.stringify(trackerJSON));
             res.send(trackerJSON)
           }
@@ -218,4 +235,11 @@ app.get("/getTweets", async (req, res) => {
     }
 });
 
+// app.use((req, res) => {
+//   res.sendFile(path.join(__dirname, './build/', 'index.html'));
+// })  
+app.use('/static', express.static(path.join(__dirname, './build//static')));
+app.use('*', function (req, res) {
+    res.sendFile('index.html', { root: path.join(__dirname, './build/') });
+});
 app.listen(3001);

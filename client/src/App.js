@@ -3,17 +3,20 @@ import React, { useEffect, useState } from "react";
 import Container from "react-bootstrap/Container";
 import Navbar from "react-bootstrap/Navbar";
 import Row from "react-bootstrap/esm/Row";
+import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import axios from "axios";
-import Chart from 'chart.js/auto';
-import { Pie, Bar } from 'react-chartjs-2';
+import Chart from "chart.js/auto";
+import { Pie, Bar } from "react-chartjs-2";
+import { Tweet } from 'react-twitter-widgets'
 
 function App() {
   const [form, setForm] = useState({});
   const [searching, setSearching] = useState(false);
   const [average, setAverage] = useState();
   const [noSentiment, setNoSentiment] = useState();
+  const [data, setData] = useState();
 
   /**
    * Function that gets tweets given a query
@@ -29,37 +32,40 @@ function App() {
           "Content-Type": "application/json",
         },
       });
-      sentimentCount(response.data.data.map(x => x.sentimentValue))
+      setData(response.data.data)
+      sentimentCount(response.data.data.map((x) => x.sentimentValue));
     } catch (error) {
       console.error(error);
     }
     setSearching(false);
   }
 
+  /**
+   * Counts sentiment values and summarises
+   * @param {array} data 
+   */
   function sentimentCount(data) {
     let negCount = 0;
     let posCount = 0;
     let neuCount = 0;
-    const arr = [0, 0]
+    const arr = [0, 0];
 
     for (let i = 0; i < data.length; i++) {
       if (data[i] > 0) {
-        posCount++
-        arr[0] += data[i]
-      }
-      else if (data[i] < 0) {
-        negCount++
-        arr[1] -= data[i]
-      }
-      else {
-        neuCount++
+        posCount++;
+        arr[0] += data[i];
+      } else if (data[i] < 0) {
+        negCount++;
+        arr[1] -= data[i];
+      } else {
+        neuCount++;
       }
     }
-    arr[0] = arr[0] / posCount
-    arr[1] = arr[1] / negCount
+    arr[0] = arr[0] / posCount;
+    arr[1] = arr[1] / negCount;
 
-    setAverage(arr)
-    setNoSentiment([posCount, negCount, neuCount])
+    setAverage(arr);
+    setNoSentiment([posCount, negCount, neuCount]);
   }
 
   const options = {
@@ -83,6 +89,20 @@ function App() {
       },
     },
   };
+
+    /**
+   * Function that renders tweets given a query onto page
+   * @param {array} tweets    Array of tweets and their data
+   */
+     const renderTweets = (tweets) => {
+      if (!tweets) return;
+      return tweets.map((tweet, tweetIndex) => (
+        <div key={tweetIndex}>
+          <br></br>
+          <Tweet tweetId={tweet.id}/>
+        </div>
+      ))
+    }
 
   return (
     <div className="App">
@@ -113,28 +133,80 @@ function App() {
       >
         Search and Analyse Tweets
       </Button>
-      {average &&
-        <>
-          <p>Hi</p>
-          <Bar
-            data={{
-              labels: ["Positive Score", "Negative Score"],
-              datasets: [
-                {
-                  data: average,
-                  backgroundColor: [
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(255, 99, 132, 0.2)',
-                  ],
-                  borderColor: ["rgba(255, 99, 132, 1)", "rgba(75, 192, 192, 1)"],
-                  borderWidth: 1,
+      <br />
+      <br />
+        {average && (
+          <div style={{ width: 600, justifyContent: "center" }}>
+            <Bar
+              data={{
+                labels: ["Positive Average Score", "Negative Average Score"],
+                datasets: [
+                  {
+                    data: average,
+                    backgroundColor: [
+                      "rgba(75, 192, 192, 0.2)",
+                      "rgba(255, 99, 132, 0.2)",
+                    ],
+                    borderColor: [
+                      "rgba(75, 192, 192, 1)",
+                      "rgba(255, 99, 132, 1)",
+                    ],
+                    borderWidth: 1,
+                  },
+                ],
+              }}
+              options={options}
+            />
+          </div>
+        )}
+        <br />
+        <br />
+        <br />
+        {noSentiment && (
+          <div style={{ width: 600, justifyContent: "center" }}>
+            <Pie
+              data={{
+                labels: [
+                  "Positive Sentiment",
+                  "Negative Sentiment",
+                  "Neutral Sentiment",
+                ],
+                datasets: [
+                  {
+                    data: noSentiment,
+                    backgroundColor: [
+                      "rgba(75, 192, 192, 0.2)",
+                      "rgba(255, 99, 132, 0.2)",
+                      "rgba(255, 206, 86, 0.2)",
+                    ],
+                    borderColor: [
+                      "rgba(75, 192, 192, 1)",
+                      "rgba(255, 99, 132, 1)",
+                      "rgba(255, 206, 86, 1)",
+                    ],
+                    borderWidth: 1,
+                  },
+                ],
+              }}
+              options={{
+                plugins: {
+                  labels: {
+                    display: "false",
+                  },
+                  title: {
+                    display: true,
+                    text: "Sum of Sentiment",
+                  },
                 },
-              ],
-            }}
-            options={options}
-          />
-        </>
-      }
+              }}
+            />
+          </div>
+        )}
+        {data &&
+          (
+            renderTweets(data)
+          )
+        }
     </div>
   );
 }
