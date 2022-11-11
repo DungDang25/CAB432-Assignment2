@@ -52,37 +52,37 @@ async function getTweets(query) {
 // ============ Configure AWS and s3 functions ============
 
 // For local dev
-const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-const sessionToken = process.env.AWS_SESSION_TOKEN;
-console.log(`AWS Key ID: ${accessKeyId} \n`);
-console.log(`AWS Secret Key: ${secretAccessKey} \n`);
-console.log(`AWS Session Token: ${sessionToken} \n`);
+// const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+// const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+// const sessionToken = process.env.AWS_SESSION_TOKEN;
+// console.log(`AWS Key ID: ${accessKeyId} \n`);
+// console.log(`AWS Secret Key: ${secretAccessKey} \n`);
+// console.log(`AWS Session Token: ${sessionToken} \n`);
 const region = "ap-southeast-2";
 const bucketName = "n10693769-twitter-sentiment";
 
 // For when scaling
-// AWS.config.credentials = new AWS.EC2MetadataCredentials({
-//     httpOptions: { timeout: 5000 }, // 5 second timeout
-//     maxRetries: 10, // retry 10 times
-//     retryDelayOptions: { base: 200 }, // see AWS.Config for information
-//     logger: console // see AWS.Config for information
-// });
+AWS.config.credentials = new AWS.EC2MetadataCredentials({
+    httpOptions: { timeout: 5000 }, // 5 second timeout
+    maxRetries: 10, // retry 10 times
+    retryDelayOptions: { base: 200 }, // see AWS.Config for information
+    logger: console // see AWS.Config for information
+});
 
-const AWSConfig = {
-  region,
-  accessKeyId,
-  secretAccessKey,
-  sessionToken,
-};
+// const AWSConfig = {
+//   region,
+//   accessKeyId,
+//   secretAccessKey,
+//   sessionToken,
+// };
 
-AWS.config.update(AWSConfig);
+// AWS.config.update(AWSConfig);
 var s3 = new AWS.S3();
 
 // Create unique bucket name
 async function bucketCreate(bucketName) {
   try {
-    await s3.createBucket({ Bucket: bucketName }).promise();
+    await s3.createBucket({ Bucket: bucketName, region: region }).promise();
     console.log(`Created bucket: ${bucketName}`);
   } catch (err) {
     // We will ignore 409 errors which indicate that the bucket already exists
@@ -118,14 +118,12 @@ async function s3Write(bucketName, key, query, data) {
 
 // ============ Configure Redis and Redis Functions ============
 // On scaling
-// const elasti =
-//   "n10693769-assignment-2-001.n10693769-assignment-2.km2jzi.apse2.cache.amazonaws.com:6379";
-// const redisClient = redis.createClient({
-//   url: `redis://${elasti}`,
-// });
-
-// Local dev
-const redisClient = redis.createClient();
+const redisClient = redis.createClient({
+  socket: {
+    host:"n10693769-assignment2-cache.km2jzi.ng.0001.apse2.cache.amazonaws.com",
+    port:6379,
+  },
+});
 (async () => {
   try {
     await redisClient.connect();
@@ -133,6 +131,16 @@ const redisClient = redis.createClient();
     console.log(err);
   }
 })();
+
+// Local dev
+// const redisClient = redis.createClient();
+// (async () => {
+//   try {
+//     await redisClient.connect();
+//   } catch (err) {
+//     console.log(err);
+//   }
+// })();
 
 // Write to Redis
 /**
@@ -239,8 +247,8 @@ app.get("/getTweets", async (req, res) => {
     }
 });
  
-// app.use('/static', express.static(path.join(__dirname, './build//static')));
-// app.use('*', function (req, res) {
-//     res.sendFile('index.html', { root: path.join(__dirname, './build/') });
-// });
+app.use('/static', express.static(path.join(__dirname, './build//static')));
+app.use('*', function (req, res) {
+    res.sendFile('index.html', { root: path.join(__dirname, './build/') });
+});
 app.listen(3001);

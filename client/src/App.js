@@ -26,7 +26,7 @@ function App() {
     setSearching(true);
     const encode = encodeURIComponent(query);
     try {
-      const response = await axios.get("http://localhost:3001/getTweets", {
+      const response = await axios.get("/getTweets", {
         headers: {
           query: `${encode}`,
           "Content-Type": "application/json",
