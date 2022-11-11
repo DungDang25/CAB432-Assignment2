@@ -182,6 +182,7 @@ app.get("/getTweets", async (req, res) => {
       // Serve from redis
       console.log("============ Data still valid within 12 hours. Serve from Redis ============");
       const trackerJSON = JSON.parse(tracker);
+      console.log(trackerJSON)
       res.send(trackerJSON)
     } else {
       s3.headObject(params, async function (resolve, err) {
@@ -202,6 +203,7 @@ app.get("/getTweets", async (req, res) => {
             timestamp: `${new Date().toISOString()}`,
             data: data,
           };
+          console.log(trackerRedis)
           redisClient.setEx(key, 3600, JSON.stringify(trackerRedis));
           res.send(trackerRedis)
         } else {
@@ -223,10 +225,12 @@ app.get("/getTweets", async (req, res) => {
               timestamp: `${new Date().toISOString()}`,
               data: data
             };
+            console.log(trackerRedis)
             redisWrite(key, trackerRedis);
             res.send(trackerRedis)
           } else {
             console.log("============ Data within 12 hours. Server from S3 ============");
+            console.log(trackerJSON)
             redisClient.setEx(key, 3600, JSON.stringify(trackerJSON));
             res.send(trackerJSON)
           }
