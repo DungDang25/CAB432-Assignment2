@@ -75,8 +75,8 @@ AWS.config.credentials = new AWS.EC2MetadataCredentials({
 //   secretAccessKey,
 //   sessionToken,
 // };
+// AWS.config.update(AWSConfig);
 
-AWS.config.update(AWSConfig);
 var s3 = new AWS.S3();
 
 // Create unique bucket name
