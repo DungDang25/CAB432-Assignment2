@@ -238,12 +238,9 @@ app.get("/getTweets", async (req, res) => {
       });
     }
 });
-
-// app.use((req, res) => {
-//   res.sendFile(path.join(__dirname, './build/', 'index.html'));
-// })  
-app.use('/static', express.static(path.join(__dirname, './build//static')));
-app.use('*', function (req, res) {
-    res.sendFile('index.html', { root: path.join(__dirname, './build/') });
-});
+ 
+// app.use('/static', express.static(path.join(__dirname, './build//static')));
+// app.use('*', function (req, res) {
+//     res.sendFile('index.html', { root: path.join(__dirname, './build/') });
+// });
 app.listen(3001);
