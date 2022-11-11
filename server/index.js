@@ -59,7 +59,7 @@ async function getTweets(query) {
 // console.log(`AWS Secret Key: ${secretAccessKey} \n`);
 // console.log(`AWS Session Token: ${sessionToken} \n`);
 // const region = "ap-southeast-2";
-// const bucketName = "n10693769-twitter-sentiment";
+const bucketName = "n10693769-twitter-sentiment";
 
 //For when scaling
 AWS.config.credentials = new AWS.EC2MetadataCredentials({
