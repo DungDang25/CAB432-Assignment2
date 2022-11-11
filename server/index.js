@@ -1,7 +1,6 @@
 require("dotenv").config();
 var redis = require("redis");
 const express = require("express");
-var router = express.Router();
 const AWS = require("aws-sdk");
 const { env } = require("process");
 const axios = require("axios");
@@ -59,16 +58,6 @@ async function getTweets(query) {
 // console.log(`AWS Secret Key: ${secretAccessKey} \n`);
 // console.log(`AWS Session Token: ${sessionToken} \n`);
 // const region = "ap-southeast-2";
-const bucketName = "n10693769-twitter-sentiment";
-
-//For when scaling
-AWS.config.credentials = new AWS.EC2MetadataCredentials({
-    httpOptions: { timeout: 5000 }, // 5 second timeout
-    maxRetries: 10, // retry 10 times
-    retryDelayOptions: { base: 200 }, // see AWS.Config for information
-    logger: console // see AWS.Config for information
-});
-
 // const AWSConfig = {
 //   region,
 //   accessKeyId,
@@ -76,6 +65,15 @@ AWS.config.credentials = new AWS.EC2MetadataCredentials({
 //   sessionToken,
 // };
 // AWS.config.update(AWSConfig);
+const bucketName = "n10693769-twitter-sentiment";
+
+// On EC2
+AWS.config.credentials = new AWS.EC2MetadataCredentials({
+    httpOptions: { timeout: 5000 }, // 5 second timeout
+    maxRetries: 10, // retry 10 times
+    retryDelayOptions: { base: 200 }, // see AWS.Config for information
+    logger: console // see AWS.Config for information
+});
 
 var s3 = new AWS.S3();
 
@@ -119,7 +117,7 @@ async function s3Write(bucketName, key, query, data) {
 //async function s3Read()
 
 // ============ Configure Redis and Redis Functions ============
-// On scaling
+// On EC2
 const redisClient = redis.createClient({
   socket: {
     host:"n10693769-assignment2-cache.km2jzi.ng.0001.apse2.cache.amazonaws.com",
@@ -183,8 +181,6 @@ app.get("/getTweets", async (req, res) => {
     const key = `${query}-tracker`;
 
     const tracker = await redisClient.get(key);
-  
-    bucketCreate(bucketName);
   
     const params = { Bucket: bucketName, Key: key };
 

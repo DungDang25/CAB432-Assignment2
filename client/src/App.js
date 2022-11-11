@@ -2,12 +2,9 @@ import "./App.css";
 import React, { useEffect, useState } from "react";
 import Container from "react-bootstrap/Container";
 import Navbar from "react-bootstrap/Navbar";
-import Row from "react-bootstrap/esm/Row";
-import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import axios from "axios";
-import Chart from "chart.js/auto";
 import { Pie, Bar } from "react-chartjs-2";
 import { Tweet } from 'react-twitter-widgets'
 
