@@ -52,16 +52,16 @@ async function getTweets(query) {
 // ============ Configure AWS and s3 functions ============
 
 // For local dev
-// const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-// const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-// const sessionToken = process.env.AWS_SESSION_TOKEN;
+// const accessKeyId = "ASIA5DYSEEJ45GGQR4ND"
+// const secretAccessKey = "gSL6Fd7f+Duv4gLW+dgC6Q7KrlgkJrLHj33Kk3V5"
+// const sessionToken = "IQoJb3JpZ2luX2VjEJT//////////wEaDmFwLXNvdXRoZWFzdC0yIkcwRQIhALf4V3/iBcI4LjAV/wQNfHCDLyGC011lzYDr0KJBJ7QmAiBtczYTNKE60ytFb7w9XFJPzzXNUoMBO7pLp4d+2+yf7Sq5AwiN//////////8BEAIaDDkwMTQ0NDI4MDk1MyIMSAEm19KBJNDJNef0Ko0DuVqHySmpRKiiI2AwGU2tWv3s1l28LMf5pRSS4sOWAdOvlJvkQnALHCqpDr8jDGIDZqJpxU9puNBdooGy1gtC9PAcMhe6+o6uSnd/+UK1U6A+ttSF0hiZQKn2kV6zhF8Ai1JyN+Ksflq/Bn8fRT9wJZIGmzdKLZDPktFwFOz/25P7uCMbvIE6GF6JiJ8b8c2PGNT7AAEIDxO9JoOTDJmYM25jxWKkn1Lfe62We+39uR5KnApa7sS18ia0CpwG3mWDDniQ5aACHGLrgKU5hmgqLDJoH5seVH0/BGG4L74t2tbfm6ZY6RuV0lQYHzUs50ojXJ5kvCCpUxIaLYNNTU/Yv4rXqNXO/fe7vx9+dN1pmFmCEzJVvvTMcbKajaWFmMFYi97RQwoodE9/dJuNPURbfV7qwfiTHaPxi5B8m5gArCdcJ1z0DNng5ceyLAJlzJqHtkv2+GXn9OLr0Fou3lTa8q4dyYn+B+r0BPbTvv+k5x5q5F+LMtXhL2exAL38dGEbnbDXA4uTaT9i0448czCD4ribBjqmAYC4qt6YMGFNqAV00h8qK39a0R+aAj/RYHd2SNObnE48IhJTs394FfZrPjw9gGRfUUrBJdum+FVeviPpNZ/S8rx5TdDjxQXrqQu3ohdSUSgkPj57QJY97CxXVd394G4BOUBBC8OwjNHp9gIFUryA2mtEfbiWlxiITpLw/ZSDYQ3SQPScQkLBZL542gM9/eLcxp4KzPshWUbLnyFd2nYPH0NmM/FvD5U="
 // console.log(`AWS Key ID: ${accessKeyId} \n`);
 // console.log(`AWS Secret Key: ${secretAccessKey} \n`);
 // console.log(`AWS Session Token: ${sessionToken} \n`);
-const region = "ap-southeast-2";
-const bucketName = "n10693769-twitter-sentiment";
+// const region = "ap-southeast-2";
+// const bucketName = "n10693769-twitter-sentiment";
 
-// For when scaling
+//For when scaling
 AWS.config.credentials = new AWS.EC2MetadataCredentials({
     httpOptions: { timeout: 5000 }, // 5 second timeout
     maxRetries: 10, // retry 10 times
@@ -76,13 +76,13 @@ AWS.config.credentials = new AWS.EC2MetadataCredentials({
 //   sessionToken,
 // };
 
-// AWS.config.update(AWSConfig);
+AWS.config.update(AWSConfig);
 var s3 = new AWS.S3();
 
 // Create unique bucket name
 async function bucketCreate(bucketName) {
   try {
-    await s3.createBucket({ Bucket: bucketName, region: region }).promise();
+    await s3.createBucket({ Bucket: bucketName}).promise();
     console.log(`Created bucket: ${bucketName}`);
   } catch (err) {
     // We will ignore 409 errors which indicate that the bucket already exists
@@ -91,6 +91,8 @@ async function bucketCreate(bucketName) {
     }
   }
 }
+
+bucketCreate(bucketName)
 
 
 /**
